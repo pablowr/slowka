@@ -80,7 +80,7 @@ html, body {
 .game-menu-btn { width: 30px; height: 30px; background: #f2f2f7; border: none; border-radius: 50%; color: #636366; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; cursor: pointer; }
 #cardWrapper { margin: 14px 24px 0; border-radius: 18px; background: #f2f2f7; aspect-ratio: 1 / 0.82; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 24px 28px; cursor: pointer; user-select: none; touch-action: none; position: relative; overflow: hidden; }
 .card-lang-tag { font-size: 0.6rem; letter-spacing: 0.16em; text-transform: uppercase; color: #aaa; background: rgba(0,0,0,0.05); padding: 4px 12px; border-radius: 99px; pointer-events: none; flex-shrink: 0; }
-#cardWord { font-size: clamp(1rem, 5.5vw, 2.6rem); font-weight: 700; letter-spacing: -0.02em; color: #000; text-align: center; line-height: 1.15; pointer-events: none; word-break: normal; overflow-wrap: normal; hyphens: none; width: 100%; }
+#cardWord { font-size: 2.6rem; font-weight: 700; letter-spacing: -0.02em; color: #000; text-align: center; line-height: 1.2; pointer-events: none; word-break: keep-all; overflow-wrap: anywhere; width: 100%; }
 .card-hint { display: flex; align-items: center; gap: 8px; font-size: 0.6rem; color: #c7c7cc; letter-spacing: 0.1em; text-transform: uppercase; pointer-events: none; flex-shrink: 0; }
 .card-hint-line { width: 18px; height: 1px; background: #c7c7cc; }
 .swipe-ind { position: absolute; top: 16px; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 4px 12px; border-radius: 99px; opacity: 0; pointer-events: none; }
@@ -345,8 +345,8 @@ html, body {
       <div class="modal-field"><label>🇵🇱 Polskie</label><input type="text" id="editModalPl" autocomplete="off"/></div>
       <p class="modal-msg" id="editModalMsg"></p>
       <div class="modal-actions">
-        <button class="modal-btn-save" onclick="saveEdit()">✓ Zapisz</button>
         <button class="modal-btn-cancel" onclick="closeEditModal()">Anuluj</button>
+        <button class="modal-btn-save" onclick="saveEdit()">✓ Zapisz</button>
       </div>
     </div>
   </div>
