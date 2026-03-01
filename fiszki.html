@@ -1,0 +1,1135 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Słówka Pawła</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #c9a84c;
+    --ink: #1a1a2e;
+    --paper: #f0ece0;
+    --muted: #888;
+    --green: #2ecc71;
+    --red: #e74c3c;
+    --card-w: min(420px, 92vw);
+    --card-h: min(260px, 46vw);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    min-height: 100vh;
+    font-family: 'DM Sans', sans-serif;
+    background: #12122a;
+    color: #e8e8e8;
+    overflow-x: hidden;
+  }
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(ellipse at 20% 50%, rgba(201,168,76,0.05) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 20%, rgba(100,80,160,0.06) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+  header {
+    width: 100%;
+    padding: 24px 32px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    z-index: 1;
+    display: none;
+  }
+  .logo { font-family: 'Playfair Display', serif; font-size: 1.6rem; }
+  .logo span { color: var(--gold); }
+  .logo sub { font-size: 0.6rem; color: var(--muted); margin-left: 6px; vertical-align: middle; }
+  #resetBtn {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 10px;
+    color: #aaa;
+    padding: 8px 16px;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem;
+  }
+  #resetBtn:hover { background: rgba(255,255,255,0.1); color: #e8e8e8; }
+
+  /* ── HOME ── */
+  #homeScreen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 40px 20px;
+    gap: 16px;
+    position: relative;
+    z-index: 1;
+  }
+  .home-logo { font-family: 'Playfair Display', serif; font-size: clamp(2.4rem,8vw,4rem); color: var(--gold); letter-spacing: -1px; }
+  .home-logo span { color: #e8e8e8; }
+  .home-sub { color: #888; font-size: 0.95rem; margin: 0 0 16px; }
+  .home-buttons { display: flex; flex-direction: column; gap: 14px; width: 100%; max-width: 320px; }
+  .home-btn {
+    padding: 18px 24px; border: none; border-radius: 16px;
+    font-size: 1.1rem; font-family: 'DM Sans', sans-serif; font-weight: 600;
+    cursor: pointer; transition: transform 0.12s, box-shadow 0.15s;
+    width: 100%;
+  }
+  .home-btn:active { transform: scale(0.97); }
+  .home-btn-play { background: linear-gradient(135deg, #c9a84c, #a8872f); color: #1a1a2e; box-shadow: 0 8px 28px rgba(201,168,76,0.25); }
+  .home-btn-play:hover { box-shadow: 0 12px 36px rgba(201,168,76,0.38); }
+  .home-btn-add { background: rgba(255,255,255,0.08); color: #e8e8e8; border: 1px solid rgba(255,255,255,0.15); }
+  .home-btn-add:hover { background: rgba(255,255,255,0.12); }
+  .home-btn-edit { background: rgba(255,255,255,0.04); color: #888; border: 1px solid rgba(255,255,255,0.08); font-size: 0.95rem; padding: 14px 24px; }
+  .home-btn-edit:hover { background: rgba(255,255,255,0.09); color: #bbb; }
+  .home-btn-settings { background: rgba(255,255,255,0.03); color: #666; border: 1px solid rgba(255,255,255,0.06); font-size: 0.85rem; padding: 12px 24px; }
+  .home-btn-settings:hover { background: rgba(255,255,255,0.07); color: #999; }
+
+  /* ── STATUS BAR ── */
+  #sheetStatus {
+    font-size: 0.78rem;
+    padding: 6px 14px;
+    border-radius: 20px;
+    margin-top: -4px;
+  }
+  .status-ok { color: #2ecc71; background: rgba(46,204,113,0.1); }
+  .status-err { color: #e74c3c; background: rgba(231,76,60,0.1); }
+  .status-loading { color: #c9a84c; background: rgba(201,168,76,0.1); }
+
+  /* ── SETUP SCREEN ── */
+  #setupScreen {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 40px 20px;
+    gap: 20px;
+    position: relative;
+    z-index: 1;
+  }
+  .setup-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 20px;
+    padding: 32px 28px;
+    width: 100%;
+    max-width: 480px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  .setup-title { font-family: 'Playfair Display', serif; font-size: 1.5rem; color: var(--gold); }
+  .setup-desc { font-size: 0.88rem; color: #888; line-height: 1.6; }
+  .setup-field { display: flex; flex-direction: column; gap: 8px; }
+  .setup-field label { font-size: 0.82rem; color: #aaa; letter-spacing: 0.05em; }
+  .setup-field textarea, .setup-field input {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 10px;
+    padding: 12px 14px;
+    color: #e8e8e8;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem;
+    outline: none;
+    resize: vertical;
+  }
+  .setup-field textarea { min-height: 120px; }
+  .setup-field textarea:focus, .setup-field input:focus { border-color: var(--gold); }
+  .setup-actions { display: flex; gap: 10px; }
+  .btn-setup-save {
+    flex: 1; padding: 14px; border: none; border-radius: 12px;
+    background: linear-gradient(135deg, #c9a84c, #a8872f);
+    color: #1a1a2e; font-weight: 700; font-size: 0.95rem;
+    font-family: 'DM Sans', sans-serif; cursor: pointer;
+  }
+  .btn-setup-back {
+    padding: 14px 20px; border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 12px; background: none; color: #888;
+    font-family: 'DM Sans', sans-serif; cursor: pointer; font-size: 0.9rem;
+  }
+  #setupMsg { font-size: 0.82rem; text-align: center; min-height: 20px; }
+  .setup-warning { font-size: 0.78rem; color: #e74c3c; background: rgba(231,76,60,0.08); border: 1px solid rgba(231,76,60,0.2); border-radius: 8px; padding: 10px 12px; line-height: 1.5; }
+
+  /* ── ADD WORD ── */
+  #addWordScreen {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 40px 20px;
+    position: relative;
+    z-index: 1;
+  }
+  .add-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 20px;
+    padding: 32px 28px;
+    width: 100%;
+    max-width: 400px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+  .add-title { font-family: 'Playfair Display', serif; font-size: 1.4rem; color: var(--gold); }
+  .add-field { display: flex; flex-direction: column; gap: 8px; }
+  .add-field label { font-size: 0.82rem; color: #aaa; }
+  .add-field input {
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.13);
+    border-radius: 12px;
+    padding: 13px 16px;
+    color: #e8e8e8;
+    font-size: 0.95rem;
+    font-family: 'DM Sans', sans-serif;
+    outline: none;
+  }
+  .add-field input:focus { border-color: var(--gold); }
+  .add-actions { display: flex; gap: 10px; }
+  .add-btn-save {
+    flex: 1; padding: 14px; border: none; border-radius: 12px;
+    background: linear-gradient(135deg, #c9a84c, #a8872f);
+    color: #1a1a2e; font-weight: 700; font-size: 0.95rem;
+    font-family: 'DM Sans', sans-serif; cursor: pointer;
+  }
+  .add-btn-back {
+    padding: 14px 20px; border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 12px; background: none; color: #888;
+    font-family: 'DM Sans', sans-serif; cursor: pointer; font-size: 0.9rem;
+  }
+  .add-msg { font-size: 0.85rem; text-align: center; min-height: 20px; }
+  .add-msg.ok { color: var(--green); }
+  .add-msg.err { color: var(--red); }
+
+  /* ── EDIT SCREEN ── */
+  #editWordScreen { display: none; flex-direction: column; min-height: 100vh; }
+  .edit-header {
+    position: sticky; top: 0; background: #1a1a2e; z-index: 10;
+    padding: 20px 20px 0; display: flex; flex-direction: column;
+    gap: 12px; border-bottom: 1px solid rgba(255,255,255,0.07);
+  }
+  .edit-header-top { display: flex; align-items: center; gap: 12px; }
+  .edit-search-wrap input {
+    width: 100%; box-sizing: border-box;
+    background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.13);
+    border-radius: 12px; padding: 12px 16px; color: #e8e8e8;
+    font-size: 0.95rem; font-family: 'DM Sans', sans-serif; outline: none;
+  }
+  .edit-search-wrap input:focus { border-color: var(--gold); }
+  .edit-list { flex: 1; overflow-y: auto; padding: 12px 16px 80px; display: flex; flex-direction: column; gap: 8px; }
+  .edit-row {
+    display: flex; align-items: center; gap: 10px;
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 12px; padding: 12px 14px; transition: background 0.15s;
+  }
+  .edit-row:hover { background: rgba(255,255,255,0.07); }
+  .edit-row-text { flex: 1; min-width: 0; }
+  .edit-row-en { font-size: 0.95rem; color: #e8e8e8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .edit-row-pl { font-size: 0.78rem; color: #888; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+  .edit-row-badge { font-size: 0.65rem; padding: 2px 7px; border-radius: 20px; background: rgba(201,168,76,0.15); color: var(--gold); white-space: nowrap; flex-shrink: 0; }
+  .edit-row-actions { display: flex; gap: 6px; flex-shrink: 0; }
+  .edit-btn-edit, .edit-btn-del {
+    width: 32px; height: 32px; border-radius: 8px; border: none;
+    cursor: pointer; font-size: 0.85rem; display: flex; align-items: center;
+    justify-content: center; transition: transform 0.12s;
+  }
+  .edit-btn-edit { background: rgba(201,168,76,0.15); color: var(--gold); }
+  .edit-btn-del { background: rgba(224,92,92,0.15); color: #e05c5c; }
+  .edit-empty { text-align: center; color: #555; padding: 40px 20px; font-size: 0.9rem; line-height: 1.7; }
+  .edit-modal {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+    display: flex; align-items: center; justify-content: center; z-index: 100; padding: 20px;
+  }
+  .edit-modal-card {
+    background: #1e1e35; border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px; padding: 28px 24px; width: 100%; max-width: 360px;
+    display: flex; flex-direction: column; gap: 18px;
+  }
+
+  /* ── GAME ── */
+  .stats-bar { display: none; padding: 16px 24px 8px; position: relative; z-index: 1; }
+  .stats-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 0.82rem; color: var(--muted); }
+  .stat-pill { display: flex; align-items: center; gap: 5px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; }
+  .dot.good { background: var(--green); }
+  .dot.bad { background: var(--red); }
+  .progress-track { height: 3px; background: rgba(255,255,255,0.08); border-radius: 99px; }
+  .progress-fill { height: 100%; background: var(--gold); border-radius: 99px; transition: width 0.4s ease; }
+  .stage {
+    flex: 1; display: flex; flex-direction: column; align-items: center;
+    justify-content: center; gap: 32px; padding: 20px; position: relative; z-index: 1; width: 100%;
+  }
+  .card-wrapper {
+    width: var(--card-w); height: var(--card-h); perspective: 1200px;
+    cursor: pointer; position: relative; user-select: none; touch-action: none;
+  }
+  .card-inner {
+    width: 100%; height: 100%; transform-style: preserve-3d;
+    transition: transform 0.5s cubic-bezier(0.4,0,0.2,1); position: relative;
+  }
+  .card-inner.flipped { transform: rotateY(180deg); }
+  .card-inner.swipe-right { transition: transform 0.38s ease, opacity 0.38s ease !important; transform: translateX(130%) rotate(16deg) !important; opacity: 0 !important; }
+  .card-inner.swipe-left { transition: transform 0.38s ease, opacity 0.38s ease !important; transform: translateX(-130%) rotate(-16deg) !important; opacity: 0 !important; }
+  .card-face {
+    position: absolute; inset: 0; border-radius: 22px;
+    backface-visibility: hidden; -webkit-backface-visibility: hidden;
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; padding: 32px; gap: 14px;
+  }
+  .card-front { background: var(--paper); color: var(--ink); box-shadow: 0 28px 70px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.04); }
+  .card-back { background: linear-gradient(140deg, #252038 0%, #1a1a2e 100%); color: var(--paper); transform: rotateY(180deg); box-shadow: 0 28px 70px rgba(0,0,0,0.55); border: 1px solid rgba(201,168,76,0.18); }
+  .card-label { font-size: 0.68rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+  .card-back .card-label { color: rgba(201,168,76,0.55); }
+  .card-word { font-family: 'Playfair Display', serif; font-size: clamp(1.5rem,5.5vw,2.6rem); text-align: center; line-height: 1.25; color: var(--ink); word-break: break-word; }
+  .card-back .card-word { color: var(--paper); font-size: clamp(1.2rem,4.5vw,2rem); }
+  .card-hint { font-size: 0.72rem; color: var(--muted); display: flex; align-items: center; gap: 5px; margin-top: 4px; }
+  .swipe-indicator {
+    position: absolute; top: 18px; font-family: 'Playfair Display', serif;
+    font-size: 1rem; font-weight: 700; letter-spacing: 0.12em; opacity: 0;
+    transition: opacity 0.08s; pointer-events: none; text-transform: uppercase;
+    padding: 4px 12px; border-radius: 99px;
+  }
+  .swipe-indicator.know { right: 18px; color: var(--green); border: 2px solid var(--green); }
+  .swipe-indicator.unknown { left: 18px; color: var(--red); border: 2px solid var(--red); }
+  .action-btns { display: flex; gap: 14px; }
+  .btn {
+    min-height: 52px; min-width: 110px; border: none; border-radius: 14px;
+    font-family: 'DM Sans', sans-serif; font-size: 0.9rem; font-weight: 500;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    gap: 7px; transition: transform 0.12s, box-shadow 0.15s;
+  }
+  .btn:active { transform: scale(0.95); }
+  .btn-bad { background: rgba(192,57,43,0.13); color: #e74c3c; border: 1px solid rgba(192,57,43,0.28); }
+  .btn-bad:hover { background: rgba(192,57,43,0.22); }
+  .btn-good { background: rgba(39,174,96,0.13); color: #2ecc71; border: 1px solid rgba(39,174,96,0.28); }
+  .btn-good:hover { background: rgba(39,174,96,0.22); }
+  .btn-flip { background: var(--gold); color: var(--ink); min-width: 150px; font-weight: 600; }
+  .btn-flip:hover { box-shadow: 0 8px 28px rgba(201,168,76,0.32); }
+  .btn-edit-inline {
+    background: none; border: none; color: #555; font-size: 0.78rem;
+    font-family: 'DM Sans', sans-serif; cursor: pointer; padding: 6px 14px;
+    border-radius: 8px; transition: color 0.15s, background 0.15s; letter-spacing: 0.03em;
+  }
+  .btn-edit-inline:hover { color: var(--gold); background: rgba(201,168,76,0.08); }
+  .keyboard-hints { font-size: 0.7rem; color: var(--muted); text-align: center; letter-spacing: 0.04em; }
+  kbd { display: inline-block; background: rgba(255,255,255,0.07); border-radius: 4px; padding: 2px 7px; font-family: monospace; font-size: 0.7rem; margin: 0 2px; }
+
+  /* ── SUMMARY ── */
+  .summary {
+    text-align: center; display: flex; flex-direction: column; align-items: center;
+    gap: 24px; padding: 48px 20px; position: relative; z-index: 1; animation: fadeUp 0.5s ease;
+  }
+  @keyframes fadeUp { from { opacity:0; transform: translateY(24px); } to { opacity:1; transform:none; } }
+  .summary h2 { font-family: 'Playfair Display', serif; font-size: clamp(1.8rem,6vw,2.8rem); color: var(--gold); }
+  .score-circle {
+    width: 150px; height: 150px; border-radius: 50%; border: 3px solid var(--gold);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    background: rgba(201,168,76,0.05); box-shadow: 0 0 40px rgba(201,168,76,0.1);
+  }
+  .score-num { font-family: 'Playfair Display', serif; font-size: 3rem; color: var(--gold); line-height: 1; }
+  .score-denom { font-size: 0.78rem; color: var(--muted); letter-spacing: 0.1em; margin-top: 2px; }
+  .score-details { display: flex; gap: 28px; }
+  .score-detail { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .score-detail span:first-child { font-size: 1.6rem; font-weight: 700; }
+  .score-detail span:last-child { font-size: 0.75rem; color: var(--muted); letter-spacing: 0.08em; }
+  #sumMsg { font-size: 0.9rem; color: var(--muted); max-width: 280px; }
+  .btn-primary {
+    padding: 16px 40px; border: none; border-radius: 14px;
+    background: linear-gradient(135deg, #c9a84c, #a8872f);
+    color: #1a1a2e; font-weight: 700; font-size: 1rem;
+    font-family: 'DM Sans', sans-serif; cursor: pointer;
+    box-shadow: 0 8px 28px rgba(201,168,76,0.25);
+  }
+
+  /* ── LOADING ── */
+  #loadingOverlay {
+    display: none;
+    position: fixed; inset: 0; background: rgba(18,18,42,0.85);
+    z-index: 200; align-items: center; justify-content: center;
+    flex-direction: column; gap: 16px;
+    pointer-events: none;
+  }
+  .spinner {
+    width: 40px; height: 40px; border: 3px solid rgba(201,168,76,0.2);
+    border-top-color: var(--gold); border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  #loadingText { color: #888; font-size: 0.9rem; }
+
+  @media (max-width: 480px) {
+    .keyboard-hints { display: none; }
+    .action-btns { gap: 10px; }
+    .btn { min-width: 90px; font-size: 0.82rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo"><span>Słówka</span> Pawła<sub id="headerCount"></sub></div>
+  <button id="resetBtn" onclick="showHome()">☰ Menu</button>
+</header>
+
+<!-- LOADING -->
+<div id="loadingOverlay">
+  <div class="spinner"></div>
+  <div id="loadingText">Ładowanie słówek...</div>
+</div>
+
+<!-- HOME -->
+<div id="homeScreen">
+  <div class="home-logo">Słówka<span> Pawła</span></div>
+  <p class="home-sub" id="homeWordCount">ładowanie...</p>
+  <div id="sheetStatus"></div>
+  <div class="home-buttons">
+    <button class="home-btn home-btn-play" onclick="startGame()">▶ Graj</button>
+    <button class="home-btn home-btn-add" onclick="showAddWord()">＋ Dodaj słówko</button>
+    <button class="home-btn home-btn-edit" onclick="showEditWords()">✎ Edytuj bazę</button>
+    <button class="home-btn home-btn-settings" onclick="showSetup()">⚙ Ustawienia Google Sheets</button>
+  </div>
+</div>
+
+<!-- SETUP -->
+<div id="setupScreen">
+  <div class="setup-card">
+    <div class="setup-title">⚙ Google Sheets</div>
+    <div class="setup-desc">Wklej klucz prywatny z pliku JSON pobranego z Google Cloud Console. Klucz jest przechowywany tylko lokalnie w Twojej przeglądarce.</div>
+    <div class="setup-warning">⚠ Nie udostępniaj tego klucza nikomu. Nie wklejaj go w czacie ani w e-mailu.</div>
+    <div class="setup-field">
+      <label>KLUCZ PRYWATNY (private_key z pliku JSON)</label>
+      <textarea id="setupKey" placeholder="-----BEGIN PRIVATE KEY-----&#10;...&#10;-----END PRIVATE KEY-----"></textarea>
+    </div>
+    <div id="setupMsg"></div>
+    <div class="setup-actions">
+      <button class="btn-setup-save" onclick="saveSetup()">✓ Zapisz i połącz</button>
+      <button class="btn-setup-back" onclick="showHome()">← Wróć</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD WORD -->
+<div id="addWordScreen">
+  <div class="add-card">
+    <h2 class="add-title">Nowe słówko</h2>
+    <div class="add-field">
+      <label>🇬🇧 Angielskie słówko</label>
+      <input type="text" id="inputEn" placeholder="np. butterfly" autocomplete="off" />
+    </div>
+    <div class="add-field">
+      <label>🇵🇱 Polskie tłumaczenie</label>
+      <input type="text" id="inputPl" placeholder="np. motyl" autocomplete="off" />
+    </div>
+    <div class="add-actions">
+      <button class="add-btn-save" onclick="saveWord()">✓ Zapisz</button>
+      <button class="add-btn-back" onclick="showHome()">← Wróć</button>
+    </div>
+    <p id="addMsg" class="add-msg"></p>
+  </div>
+</div>
+
+<!-- EDIT -->
+<div id="editWordScreen">
+  <div class="edit-header">
+    <div class="edit-header-top">
+      <button class="add-btn-back" onclick="showHome()">← Wróć</button>
+      <h2 class="add-title" style="margin:0;">Edytuj bazę</h2>
+    </div>
+    <div class="edit-search-wrap">
+      <input type="text" id="editSearch" placeholder="🔍 Szukaj słówka..." oninput="renderEditList()" autocomplete="off" />
+    </div>
+  </div>
+  <div id="editList" class="edit-list"></div>
+  <div id="editModal" class="edit-modal" style="display:none;">
+    <div class="edit-modal-card">
+      <h3 class="add-title" style="font-size:1.2rem;">Edytuj słówko</h3>
+      <div class="add-field">
+        <label>🇬🇧 Angielskie</label>
+        <input type="text" id="editModalEn" autocomplete="off" />
+      </div>
+      <div class="add-field">
+        <label>🇵🇱 Polskie</label>
+        <input type="text" id="editModalPl" autocomplete="off" />
+      </div>
+      <p id="editModalMsg" style="font-size:0.82rem;text-align:center;min-height:18px;color:#888;"></p>
+      <div class="add-actions">
+        <button class="add-btn-save" onclick="saveEdit()">✓ Zapisz</button>
+        <button class="add-btn-back" onclick="closeEditModal()">✕ Anuluj</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- STATS BAR -->
+<div class="stats-bar" id="statsBar">
+  <div class="stats-row">
+    <span id="progressText">Karta 0/20</span>
+    <div style="display:flex;gap:16px;">
+      <span class="stat-pill"><span class="dot good"></span><span id="goodCount">0</span> znam</span>
+      <span class="stat-pill"><span class="dot bad"></span><span id="badCount">0</span> nie znam</span>
+    </div>
+  </div>
+  <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+</div>
+
+<!-- GAME STAGE -->
+<div class="stage" id="stage" style="display:none;">
+  <div class="card-wrapper" id="cardWrapper">
+    <div class="card-inner" id="cardInner">
+      <div class="card-face card-front">
+        <div class="card-label">angielski</div>
+        <div class="card-word" id="frontWord">–</div>
+        <div class="card-hint">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 4v6h6M23 20v-6h-6"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>
+          kliknij, by obrócić
+        </div>
+      </div>
+      <div class="card-face card-back">
+        <div class="card-label">tłumaczenie</div>
+        <div class="card-word" id="backWord">–</div>
+      </div>
+    </div>
+    <div class="swipe-indicator know" id="indKnow">✓ Znam</div>
+    <div class="swipe-indicator unknown" id="indUnknown">✗ Nie znam</div>
+  </div>
+  <div class="action-btns">
+    <button class="btn btn-bad" onclick="answer(false)">✗ Nie znam</button>
+    <button class="btn btn-flip" onclick="flipCard()">Odwróć</button>
+    <button class="btn btn-good" onclick="answer(true)">✓ Znam</button>
+  </div>
+  <button class="btn-edit-inline" onclick="openCardEdit()">✎ edytuj słówko</button>
+  <div class="keyboard-hints">
+    <kbd>Space</kbd> obróć &nbsp;·&nbsp; <kbd>←</kbd> nie znam &nbsp;·&nbsp; <kbd>→</kbd> znam
+  </div>
+</div>
+
+<!-- IN-GAME EDIT MODAL -->
+<div id="cardEditModal" class="edit-modal" style="display:none;">
+  <div class="edit-modal-card">
+    <h3 class="add-title" style="font-size:1.2rem;">Edytuj słówko</h3>
+    <div class="add-field">
+      <label>🇬🇧 Angielskie</label>
+      <input type="text" id="cardEditEn" autocomplete="off" />
+    </div>
+    <div class="add-field">
+      <label>🇵🇱 Polskie</label>
+      <input type="text" id="cardEditPl" autocomplete="off" />
+    </div>
+    <p id="cardEditMsg" style="font-size:0.82rem;text-align:center;min-height:18px;color:#888;"></p>
+    <div class="add-actions">
+      <button class="add-btn-save" onclick="saveCardEdit()">✓ Zapisz</button>
+      <button class="add-btn-back" onclick="closeCardEdit()">✕ Anuluj</button>
+    </div>
+  </div>
+</div>
+
+<!-- SUMMARY -->
+<div class="summary" id="summaryScreen" style="display:none;">
+  <h2>Sesja zakończona!</h2>
+  <div class="score-circle">
+    <div class="score-num" id="sumCorrect">0</div>
+    <div class="score-denom" id="sumDenom">/ 20 kart</div>
+  </div>
+  <div class="score-details">
+    <div class="score-detail"><span style="color:var(--green)" id="sumGood">0</span><span>ZNAM</span></div>
+    <div class="score-detail"><span style="color:var(--red)" id="sumBad">0</span><span>NIE ZNAM</span></div>
+  </div>
+  <p id="sumMsg"></p>
+  <button class="btn-primary" onclick="startNewSession()">Nowa sesja →</button>
+  <button class="add-btn-back" style="margin-top:-10px;" onclick="showHome()">← Menu główne</button>
+</div>
+
+</body>
+</html>
+<script>
+// ── CONFIG ──────────────────────────────────────────────────
+const SHEET_ID   = '1Hi2TpVAQyrN-YUz2sSI-MpZ_Y0f2wMO7RjhppvO8uDk';
+const SHEET_NAME = 'Arkusz1';
+const CLIENT_EMAIL = 'slowka-app@slowka-488823.iam.gserviceaccount.com';
+const SESSION_SIZE = 20;
+const LS_KEY = 'fiszki_session_v3';
+const LS_KEY_PRIVATE = 'fiszki_private_key';
+
+// ── STATE ───────────────────────────────────────────────────
+let words = [];          // loaded from Google Sheets
+let session = [], current = 0, results = {good:0,bad:0}, animating = false, isFlipped = false;
+let accessToken = null, tokenExpiry = 0;
+let editingRow = null;   // { rowIndex, en, pl } — 0-based row in sheet (excl. header)
+
+// ── JWT / AUTH ───────────────────────────────────────────────
+function getPrivateKey() {
+  try { return localStorage.getItem(LS_KEY_PRIVATE) || ''; } catch(e) { return ''; }
+}
+function savePrivateKey(key) {
+  try { localStorage.setItem(LS_KEY_PRIVATE, key); } catch(e) {}
+}
+
+async function getAccessToken() {
+  if (accessToken && Date.now() < tokenExpiry - 60000) return accessToken;
+  const privateKeyPem = getPrivateKey();
+  if (!privateKeyPem) throw new Error('Brak klucza prywatnego');
+
+  const pemContents = privateKeyPem
+    .replace(/\\n/g, '\n')          // handle literal \n from JSON format
+    .replace(/-----BEGIN PRIVATE KEY-----/, '')
+    .replace(/-----END PRIVATE KEY-----/, '')
+    .replace(/\s/g, '');
+
+  let binaryKey;
+  try {
+    binaryKey = Uint8Array.from(atob(pemContents), c => c.charCodeAt(0));
+  } catch(e) { throw new Error('Nieprawidłowy format klucza'); }
+
+  const cryptoKey = await crypto.subtle.importKey(
+    'pkcs8', binaryKey.buffer,
+    { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
+    false, ['sign']
+  );
+
+  const now = Math.floor(Date.now() / 1000);
+  const headerB64  = btoa(JSON.stringify({ alg: 'RS256', typ: 'JWT' })).replace(/=/g,'').replace(/\+/g,'-').replace(/\//g,'_');
+  const payloadB64 = btoa(JSON.stringify({
+    iss: CLIENT_EMAIL,
+    scope: 'https://www.googleapis.com/auth/spreadsheets',
+    aud: 'https://oauth2.googleapis.com/token',
+    exp: now + 3600, iat: now
+  })).replace(/=/g,'').replace(/\+/g,'-').replace(/\//g,'_');
+
+  const sigInput = `${headerB64}.${payloadB64}`;
+  const sig = await crypto.subtle.sign('RSASSA-PKCS1-v1_5', cryptoKey, new TextEncoder().encode(sigInput));
+  const sigB64 = btoa(String.fromCharCode(...new Uint8Array(sig))).replace(/=/g,'').replace(/\+/g,'-').replace(/\//g,'_');
+  const jwt = `${sigInput}.${sigB64}`;
+
+  const resp = await fetch('https://oauth2.googleapis.com/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: `grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion=${jwt}`
+  });
+  const data = await resp.json();
+  if (!data.access_token) throw new Error(data.error_description || 'Błąd autoryzacji');
+  accessToken = data.access_token;
+  tokenExpiry = Date.now() + 3500000;
+  return accessToken;
+}
+
+// ── SHEETS API ───────────────────────────────────────────────
+async function sheetsRead() {
+  const token = await getAccessToken();
+  const range = `${encodeURIComponent(SHEET_NAME)}!A:B`;
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}`;
+  const resp = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+  const data = await resp.json();
+  if (data.error) throw new Error(data.error.message);
+  const rows = data.values || [];
+  // rows[0] = header, rows[1+] = words
+  return rows.slice(1).filter(r => r[0] && r[1]).map((r, i) => ({ en: r[0], pl: r[1], rowIndex: i }));
+}
+
+async function sheetsAppend(en, pl) {
+  const token = await getAccessToken();
+  const range = `${encodeURIComponent(SHEET_NAME)}!A:B`;
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`;
+  const resp = await fetch(url, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ values: [[en, pl]] })
+  });
+  const data = await resp.json();
+  if (data.error) throw new Error(data.error.message);
+}
+
+async function sheetsUpdate(rowIndex, en, pl) {
+  const token = await getAccessToken();
+  const row = rowIndex + 2; // +1 header, +1 because sheets are 1-indexed
+  const range = `${encodeURIComponent(SHEET_NAME)}!A${row}:B${row}`;
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}?valueInputOption=RAW`;
+  const resp = await fetch(url, {
+    method: 'PUT',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ values: [[en, pl]] })
+  });
+  const data = await resp.json();
+  if (data.error) throw new Error(data.error.message);
+}
+
+async function sheetsDelete(rowIndex) {
+  const token = await getAccessToken();
+  // First get sheet gid
+  const metaResp = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  const meta = await metaResp.json();
+  const sheet = meta.sheets.find(s => s.properties.title === SHEET_NAME);
+  if (!sheet) throw new Error('Nie znaleziono arkusza');
+  const sheetGid = sheet.properties.sheetId;
+
+  const row = rowIndex + 1; // +1 for header (0-indexed in batchUpdate)
+  const resp = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}:batchUpdate`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      requests: [{
+        deleteDimension: {
+          range: { sheetId: sheetGid, dimension: 'ROWS', startIndex: row, endIndex: row + 1 }
+        }
+      }]
+    })
+  });
+  const data = await resp.json();
+  if (data.error) throw new Error(data.error.message);
+}
+
+// ── LOADING UI ───────────────────────────────────────────────
+function showLoading(text) {
+  const el = document.getElementById('loadingOverlay');
+  document.getElementById('loadingText').textContent = text || 'Ładowanie...';
+  el.style.display = 'flex';
+  el.style.pointerEvents = 'all';
+}
+function hideLoading() {
+  const el = document.getElementById('loadingOverlay');
+  el.style.display = 'none';
+  el.style.pointerEvents = 'none';
+}
+
+function setSheetStatus(type, text) {
+  const el = document.getElementById('sheetStatus');
+  el.className = `status-${type}`;
+  el.textContent = text;
+}
+
+// ── LOAD WORDS ───────────────────────────────────────────────
+async function loadWords() {
+  if (!getPrivateKey()) {
+    setSheetStatus('err', '⚠ Brak klucza — skonfiguruj Google Sheets');
+    document.getElementById('homeWordCount').textContent = 'brak połączenia z bazą';
+    return;
+  }
+  setSheetStatus('loading', '⏳ Łączenie z Google Sheets...');
+  try {
+    showLoading('Ładowanie słówek z Google Sheets...');
+    words = await sheetsRead();
+    const count = words.length;
+    document.getElementById('homeWordCount').textContent = `${count} słówek w bazie`;
+    const hdr = document.getElementById('headerCount');
+    if (hdr) hdr.textContent = ` · ${count} słówek`;
+    setSheetStatus('ok', `✓ Połączono — ${count} słówek`);
+  } catch(e) {
+    setSheetStatus('err', `✗ Błąd: ${e.message}`);
+    document.getElementById('homeWordCount').textContent = 'błąd połączenia';
+    words = [];
+  } finally {
+    hideLoading();
+  }
+}
+
+// ── GAME ─────────────────────────────────────────────────────
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length-1; i>0; i--) {
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function startGame() {
+  if (!words.length) {
+    alert('Brak słówek. Skonfiguruj połączenie z Google Sheets.');
+    showSetup();
+    return;
+  }
+  animating = false;
+  isFlipped = false;
+  hideAllScreens();
+  document.querySelector('header').style.display = 'flex';
+  startNewSession();
+}
+
+function startNewSession() {
+  animating = false;
+  isFlipped = false;
+  session = shuffle(words).slice(0, Math.min(SESSION_SIZE, words.length));
+  current = 0; results = {good:0,bad:0};
+  showStage(); renderCard(); updateStats();
+}
+
+function showStage() {
+  document.getElementById('stage').style.display = 'flex';
+  document.getElementById('statsBar').style.display = 'block';
+}
+
+function renderCard() {
+  if (current >= session.length) { showSummary(); return; }
+  const card = session[current];
+  const inner = document.getElementById('cardInner');
+  inner.classList.remove('swipe-right', 'swipe-left', 'card-enter', 'flipped');
+  inner.style.transform = '';
+  isFlipped = false;
+  document.getElementById('frontWord').textContent = card.en;
+  document.getElementById('backWord').textContent = card.pl;
+  inner.classList.add('card-enter');
+  setTimeout(() => inner.classList.remove('card-enter'), 350);
+}
+
+function updateStats() {
+  const done = current;
+  const total = session.length;
+  document.getElementById('progressText').textContent = `Karta ${done}/${total}`;
+  document.getElementById('goodCount').textContent = results.good;
+  document.getElementById('badCount').textContent = results.bad;
+  document.getElementById('progressFill').style.width = `${(done/total)*100}%`;
+}
+
+function flipCard() {
+  if (animating) return;
+  isFlipped = !isFlipped;
+  document.getElementById('cardInner').classList.toggle('flipped', isFlipped);
+}
+
+function answer(correct) {
+  if (animating) return;
+  animating = true;
+  if (correct) results.good++; else results.bad++;
+  current++;
+  updateStats();
+  const inner = document.getElementById('cardInner');
+  inner.classList.add(correct ? 'swipe-right' : 'swipe-left');
+  setTimeout(() => {
+    animating = false;
+    inner.classList.remove('swipe-right', 'swipe-left');
+    inner.style.transform = '';
+    renderCard();
+  }, 400);
+}
+
+function showSummary() {
+  document.getElementById('stage').style.display = 'none';
+  document.getElementById('statsBar').style.display = 'none';
+  const s = document.getElementById('summaryScreen');
+  s.style.display = 'flex';
+  const total = session.length;
+  document.getElementById('sumCorrect').textContent = results.good;
+  document.getElementById('sumDenom').textContent = `/ ${total} kart`;
+  document.getElementById('sumGood').textContent = results.good;
+  document.getElementById('sumBad').textContent = results.bad;
+  const pct = Math.round((results.good/total)*100);
+  const msgs = [
+    [100,'🏆 Perfekcyjnie!'],
+    [80,'🎉 Świetna robota!'],
+    [60,'💪 Dobry wynik!'],
+    [40,'📚 Ćwicz więcej!'],
+    [0,'🌱 Nie poddawaj się!']
+  ];
+  const [,msg] = msgs.find(([t]) => pct >= t);
+  document.getElementById('sumMsg').textContent = `${pct}% poprawnych — ${msg}`;
+}
+
+// ── IN-GAME CARD EDIT ─────────────────────────────────────────
+function openCardEdit() {
+  const card = session[current];
+  document.getElementById('cardEditEn').value = card.en;
+  document.getElementById('cardEditPl').value = card.pl;
+  document.getElementById('cardEditMsg').textContent = '';
+  document.getElementById('cardEditModal').style.display = 'flex';
+  document.getElementById('cardEditEn').focus();
+}
+function closeCardEdit() {
+  document.getElementById('cardEditModal').style.display = 'none';
+}
+async function saveCardEdit() {
+  const en = document.getElementById('cardEditEn').value.trim();
+  const pl = document.getElementById('cardEditPl').value.trim();
+  if (!en || !pl) return;
+  const msg = document.getElementById('cardEditMsg');
+  msg.textContent = 'Zapisywanie...'; msg.style.color = '#888';
+  const card = session[current];
+  try {
+    await sheetsUpdate(card.rowIndex, en, pl);
+    // Update in-memory
+    card.en = en; card.pl = pl;
+    const wi = words.findIndex(w => w.rowIndex === card.rowIndex);
+    if (wi !== -1) { words[wi].en = en; words[wi].pl = pl; }
+    session[current] = card;
+    document.getElementById('frontWord').textContent = en;
+    document.getElementById('backWord').textContent = pl;
+    msg.textContent = '✓ Zapisano'; msg.style.color = '#2ecc71';
+    setTimeout(closeCardEdit, 800);
+  } catch(e) {
+    msg.textContent = `✗ ${e.message}`; msg.style.color = '#e74c3c';
+  }
+}
+
+// ── ADD WORD ─────────────────────────────────────────────────
+async function saveWord() {
+  const en = document.getElementById('inputEn').value.trim();
+  const pl = document.getElementById('inputPl').value.trim();
+  const msg = document.getElementById('addMsg');
+  if (!en || !pl) { msg.textContent = 'Wypełnij oba pola!'; msg.className = 'add-msg err'; return; }
+  msg.textContent = 'Zapisywanie...'; msg.className = 'add-msg';
+  try {
+    await sheetsAppend(en, pl);
+    const newRow = { en, pl, rowIndex: words.length };
+    words.push(newRow);
+    document.getElementById('homeWordCount').textContent = `${words.length} słówek w bazie`;
+    msg.textContent = `✓ Zapisano: ${en} = ${pl}`; msg.className = 'add-msg ok';
+    document.getElementById('inputEn').value = '';
+    document.getElementById('inputPl').value = '';
+    document.getElementById('inputEn').focus();
+  } catch(e) {
+    msg.textContent = `✗ ${e.message}`; msg.className = 'add-msg err';
+  }
+}
+
+// ── EDIT WORD LIST ────────────────────────────────────────────
+function showEditWords() {
+  hideAllScreens();
+  document.getElementById('editWordScreen').style.display = 'flex';
+  document.getElementById('editSearch').value = '';
+  renderEditList();
+}
+
+function renderEditList() {
+  const q = document.getElementById('editSearch').value.toLowerCase();
+  const filtered = words.filter(w =>
+    w.en.toLowerCase().includes(q) || w.pl.toLowerCase().includes(q)
+  );
+  const list = document.getElementById('editList');
+  if (!filtered.length) {
+    list.innerHTML = `<div class="edit-empty">Brak wyników dla "<b>${q}</b>"</div>`;
+    return;
+  }
+  list.innerHTML = filtered.map(w => `
+    <div class="edit-row">
+      <div class="edit-row-text">
+        <div class="edit-row-en">${escHtml(w.en)}</div>
+        <div class="edit-row-pl">${escHtml(w.pl)}</div>
+      </div>
+      <div class="edit-row-actions">
+        <button class="edit-btn-edit" onclick="openEditModal(${w.rowIndex})">✎</button>
+        <button class="edit-btn-del" onclick="deleteWordRow(${w.rowIndex})">✕</button>
+      </div>
+    </div>`).join('');
+}
+
+function openEditModal(rowIndex) {
+  const word = words.find(w => w.rowIndex === rowIndex);
+  if (!word) return;
+  editingRow = rowIndex;
+  document.getElementById('editModalEn').value = word.en;
+  document.getElementById('editModalPl').value = word.pl;
+  document.getElementById('editModalMsg').textContent = '';
+  document.getElementById('editModal').style.display = 'flex';
+  document.getElementById('editModalEn').focus();
+}
+function closeEditModal() {
+  document.getElementById('editModal').style.display = 'none';
+  editingRow = null;
+}
+async function saveEdit() {
+  const en = document.getElementById('editModalEn').value.trim();
+  const pl = document.getElementById('editModalPl').value.trim();
+  if (!en || !pl) return;
+  const msg = document.getElementById('editModalMsg');
+  msg.textContent = 'Zapisywanie...'; msg.style.color = '#888';
+  try {
+    await sheetsUpdate(editingRow, en, pl);
+    const wi = words.findIndex(w => w.rowIndex === editingRow);
+    if (wi !== -1) { words[wi].en = en; words[wi].pl = pl; }
+    msg.textContent = '✓ Zapisano'; msg.style.color = '#2ecc71';
+    setTimeout(() => { closeEditModal(); renderEditList(); }, 600);
+  } catch(e) {
+    msg.textContent = `✗ ${e.message}`; msg.style.color = '#e74c3c';
+  }
+}
+
+async function deleteWordRow(rowIndex) {
+  if (!confirm('Usunąć to słówko z Google Sheets?')) return;
+  try {
+    showLoading('Usuwanie...');
+    await sheetsDelete(rowIndex);
+    words = words.filter(w => w.rowIndex !== rowIndex);
+    words.forEach((w, i) => w.rowIndex = i);
+    renderEditList();
+    document.getElementById('homeWordCount').textContent = `${words.length} słówek w bazie`;
+  } catch(e) {
+    alert(`Błąd: ${e.message}`);
+  } finally {
+    hideLoading();
+  }
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── SETUP ─────────────────────────────────────────────────────
+function showSetup() {
+  hideAllScreens();
+  document.getElementById('setupScreen').style.display = 'flex';
+  const key = getPrivateKey();
+  if (key) {
+    document.getElementById('setupKey').value = key;
+  }
+}
+
+async function saveSetup() {
+  const key = document.getElementById('setupKey').value.trim();
+  const msg = document.getElementById('setupMsg');
+  if (!key || (!key.includes('PRIVATE KEY') && !key.includes('PRIVATE KEY'))) {
+    msg.textContent = '✗ Wklej prawidłowy klucz prywatny'; msg.style.color = '#e74c3c'; return;
+  }
+  msg.textContent = 'Testowanie połączenia...'; msg.style.color = '#888';
+  savePrivateKey(key);
+  accessToken = null; // Reset token
+  try {
+    showLoading('Testowanie połączenia...');
+    words = await sheetsRead();
+    msg.textContent = `✓ Połączono! Załadowano ${words.length} słówek`; msg.style.color = '#2ecc71';
+    document.getElementById('homeWordCount').textContent = `${words.length} słówek w bazie`;
+    setSheetStatus('ok', `✓ Połączono — ${words.length} słówek`);
+    setTimeout(showHome, 1200);
+  } catch(e) {
+    msg.textContent = `✗ ${e.message}`; msg.style.color = '#e74c3c';
+  } finally {
+    hideLoading();
+  }
+}
+
+// ── NAVIGATION ────────────────────────────────────────────────
+function hideAllScreens() {
+  ['homeScreen','setupScreen','addWordScreen','editWordScreen',
+   'stage','statsBar','summaryScreen'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+  document.querySelector('header').style.display = 'none';
+}
+
+function showHome() {
+  hideAllScreens();
+  document.getElementById('homeScreen').style.display = 'flex';
+  document.getElementById('homeWordCount').textContent =
+    words.length ? `${words.length} słówek w bazie` : (getPrivateKey() ? 'ładowanie...' : 'brak połączenia');
+}
+
+function showAddWord() {
+  hideAllScreens();
+  document.getElementById('addWordScreen').style.display = 'flex';
+  document.getElementById('inputEn').value = '';
+  document.getElementById('inputPl').value = '';
+  document.getElementById('addMsg').textContent = '';
+}
+
+// ── KEYBOARD ─────────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (['INPUT','TEXTAREA'].includes(document.activeElement.tagName)) return;
+  if (document.getElementById('cardEditModal').style.display !== 'none') {
+    if (e.key === 'Escape') closeCardEdit();
+    return;
+  }
+  if (document.getElementById('editModal').style.display !== 'none') {
+    if (e.key === 'Escape') closeEditModal();
+    return;
+  }
+  if (document.getElementById('stage').style.display !== 'none') {
+    if (e.key === ' ' || e.code === 'Space') { e.preventDefault(); flipCard(); }
+    if (e.key === 'ArrowRight') { e.preventDefault(); answer(true); }
+    if (e.key === 'ArrowLeft')  { e.preventDefault(); answer(false); }
+  }
+  if (e.key === 'Escape') showHome();
+});
+
+// Enter to save in inputs
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Enter') return;
+  if (document.activeElement.id === 'inputEn' || document.activeElement.id === 'inputPl') saveWord();
+  if (document.activeElement.id === 'cardEditEn' || document.activeElement.id === 'cardEditPl') saveCardEdit();
+  if (document.activeElement.id === 'editModalEn' || document.activeElement.id === 'editModalPl') saveEdit();
+});
+
+// ── SWIPE ─────────────────────────────────────────────────────
+(function(){
+  const wrapper = document.getElementById('cardWrapper');
+  let startX, startY, dx = 0, active = false, startTime = 0;
+  const THRESHOLD = 75;
+
+  function resetDrag() {
+    const inner = document.getElementById('cardInner');
+    inner.style.transition = '';
+    inner.style.transform = isFlipped ? 'rotateY(180deg)' : '';
+    document.getElementById('indKnow').style.opacity = 0;
+    document.getElementById('indUnknown').style.opacity = 0;
+    startX = undefined; dx = 0; active = false;
+  }
+
+  wrapper.addEventListener('pointerdown', e => {
+    if (e.button !== 0 && e.pointerType === 'mouse') return;
+    startX = e.clientX; startY = e.clientY; dx = 0;
+    active = true; startTime = Date.now();
+    wrapper.setPointerCapture(e.pointerId);
+  });
+
+  wrapper.addEventListener('pointermove', e => {
+    if (!active || startX === undefined) return;
+    dx = e.clientX - startX;
+    const dy = e.clientY - startY;
+    if (Math.abs(dy) > Math.abs(dx) + 10) return;
+    if (Math.abs(dx) < 5) return; // ignore tiny movements
+    const inner = document.getElementById('cardInner');
+    const rot = dx * 0.07;
+    inner.style.transform = isFlipped
+      ? `rotateY(180deg) translateX(${-dx}px) rotate(${-rot}deg)`
+      : `translateX(${dx}px) rotate(${rot}deg)`;
+    inner.style.transition = 'none';
+    const k = document.getElementById('indKnow');
+    const u = document.getElementById('indUnknown');
+    if (dx > 15) { k.style.opacity = Math.min((dx-15)/55,1); u.style.opacity = 0; }
+    else if (dx < -15) { u.style.opacity = Math.min((-dx-15)/55,1); k.style.opacity = 0; }
+    else { k.style.opacity = 0; u.style.opacity = 0; }
+  });
+
+  wrapper.addEventListener('pointerup', e => {
+    if (!active) return;
+    active = false;
+    const elapsed = Date.now() - startTime;
+    const inner = document.getElementById('cardInner');
+    inner.style.transition = '';
+
+    if (Math.abs(dx) >= THRESHOLD) {
+      // swipe
+      answer(dx > 0);
+    } else if (Math.abs(dx) < 12 && elapsed < 400) {
+      // tap — flip only if not animating
+      inner.style.transform = isFlipped ? 'rotateY(180deg)' : '';
+      if (!animating) flipCard();
+    } else {
+      // cancelled drag — snap back
+      resetDrag();
+    }
+    startX = undefined; dx = 0;
+  });
+
+  wrapper.addEventListener('pointercancel', resetDrag);
+})();
+
+// ── BACKDROP CLOSE ────────────────────────────────────────────
+document.addEventListener('click', e => {
+  const cardModal = document.getElementById('cardEditModal');
+  if (cardModal.style.display !== 'none' && e.target === cardModal) closeCardEdit();
+  const editModal = document.getElementById('editModal');
+  if (editModal.style.display !== 'none' && e.target === editModal) closeEditModal();
+});
+
+// ── START ─────────────────────────────────────────────────────
+showHome();
+loadWords();
+</script>
