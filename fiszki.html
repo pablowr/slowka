@@ -78,10 +78,10 @@ html, body {
 #gameBackBtn { font-size: 0.88rem; color: #ff3b30; font-weight: 500; background: none; border: none; cursor: pointer; }
 #gameRoundBadge { background: #f2f2f7; border-radius: 99px; padding: 5px 12px; font-size: 0.62rem; color: #636366; letter-spacing: 0.06em; text-transform: uppercase; font-weight: 500; }
 .game-menu-btn { width: 30px; height: 30px; background: #f2f2f7; border: none; border-radius: 50%; color: #636366; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; cursor: pointer; }
-#cardWrapper { margin: 14px 24px 0; border-radius: 18px; background: #f2f2f7; aspect-ratio: 1 / 0.82; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 32px; cursor: pointer; user-select: none; touch-action: none; position: relative; overflow: hidden; }
-.card-lang-tag { font-size: 0.6rem; letter-spacing: 0.16em; text-transform: uppercase; color: #aaa; background: rgba(0,0,0,0.05); padding: 4px 12px; border-radius: 99px; pointer-events: none; }
-#cardWord { font-size: clamp(1.8rem,8vw,3rem); font-weight: 700; letter-spacing: -0.03em; color: #000; text-align: center; line-height: 1.05; pointer-events: none; }
-.card-hint { display: flex; align-items: center; gap: 8px; font-size: 0.6rem; color: #c7c7cc; letter-spacing: 0.1em; text-transform: uppercase; pointer-events: none; }
+#cardWrapper { margin: 14px 24px 0; border-radius: 18px; background: #f2f2f7; aspect-ratio: 1 / 0.82; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 28px 24px; cursor: pointer; user-select: none; touch-action: none; position: relative; overflow: hidden; }
+.card-lang-tag { font-size: 0.6rem; letter-spacing: 0.16em; text-transform: uppercase; color: #aaa; background: rgba(0,0,0,0.05); padding: 4px 12px; border-radius: 99px; pointer-events: none; flex-shrink: 0; }
+#cardWord { font-size: clamp(1rem, 5.5vw, 2.6rem); font-weight: 700; letter-spacing: -0.02em; color: #000; text-align: center; line-height: 1.15; pointer-events: none; word-break: break-word; overflow-wrap: break-word; max-height: calc(100% - 80px); overflow: hidden; width: 100%; }
+.card-hint { display: flex; align-items: center; gap: 8px; font-size: 0.6rem; color: #c7c7cc; letter-spacing: 0.1em; text-transform: uppercase; pointer-events: none; flex-shrink: 0; margin-top: auto; }
 .card-hint-line { width: 18px; height: 1px; background: #c7c7cc; }
 .swipe-ind { position: absolute; top: 16px; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 4px 12px; border-radius: 99px; opacity: 0; pointer-events: none; }
 #indKnow { right: 16px; color: #34c759; border: 2px solid #34c759; }
@@ -147,8 +147,8 @@ html, body {
 .lib-num { width: 20px; text-align: right; font-size: 0.75rem; color: #c7c7cc; flex-shrink: 0; }
 .lib-thumb { width: 42px; height: 42px; border-radius: 8px; background: #f2f2f7; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; font-weight: 700; color: #636366; flex-shrink: 0; }
 .lib-info { flex: 1; min-width: 0; }
-.lib-en { font-size: 0.88rem; font-weight: 500; color: #000; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.lib-pl { font-size: 0.68rem; color: #aaa; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lib-en { font-size: 0.88rem; font-weight: 500; color: #000; word-break: break-word; }
+.lib-pl { font-size: 0.68rem; color: #aaa; margin-top: 2px; word-break: break-word; line-height: 1.5; }
 .lib-actions { display: flex; gap: 6px; flex-shrink: 0; }
 .lib-edit-btn, .lib-del-btn { width: 30px; height: 30px; border: none; border-radius: 8px; cursor: pointer; font-size: 0.82rem; display: flex; align-items: center; justify-content: center; }
 .lib-edit-btn { background: rgba(0,122,255,0.08); color: #007aff; }
@@ -468,6 +468,20 @@ async function loadWords(){
   finally{hideLoading();}
 }
 
+function setCardFontSize(text) {
+  const el = document.getElementById('cardWord');
+  const len = text.length;
+  let size;
+  if (len <= 12)       size = 'clamp(1.8rem, 7vw, 2.8rem)';
+  else if (len <= 25)  size = 'clamp(1.4rem, 5.5vw, 2.2rem)';
+  else if (len <= 50)  size = 'clamp(1.1rem, 4.5vw, 1.7rem)';
+  else if (len <= 100) size = 'clamp(0.95rem, 3.5vw, 1.3rem)';
+  else                 size = 'clamp(0.82rem, 2.8vw, 1.05rem)';
+  el.style.fontSize = size;
+  // also reduce letter-spacing for long text
+  el.style.letterSpacing = len > 30 ? '-0.01em' : '-0.02em';
+}
+
 function shuffle(a){const r=[...a];for(let i=r.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[r[i],r[j]]=[r[j],r[i]];}return r;}
 
 function startGame(){
@@ -496,6 +510,7 @@ function renderCard(){
   setTimeout(()=>{
     isFlipped=false;
     document.getElementById('cardWord').textContent=card.en;
+    setCardFontSize(card.en);
     document.getElementById('cardLangTag').textContent='🇬🇧 angielski';
     document.getElementById('cardHintText').textContent='dotknij, by obrócić';
     document.getElementById('gameWordTitle').textContent=card.en;
@@ -521,7 +536,9 @@ function flipCard(){
   const card=roundWords[current],w=document.getElementById('cardWrapper');
   w.style.opacity='0';w.style.transform='scale(0.97)';
   setTimeout(()=>{
-    document.getElementById('cardWord').textContent=isFlipped?card.pl:card.en;
+    const text = isFlipped ? card.pl : card.en;
+    document.getElementById('cardWord').textContent=text;
+    setCardFontSize(text);
     document.getElementById('cardLangTag').textContent=isFlipped?'🇵🇱 tłumaczenie':'🇬🇧 angielski';
     document.getElementById('cardHintText').textContent=isFlipped?'dotknij, by wrócić':'dotknij, by obrócić';
     w.style.transition='opacity 0.15s ease,transform 0.15s ease';
@@ -588,7 +605,9 @@ async function saveEdit(){
     [words,sessionWords,roundWords].forEach(arr=>{const w=arr.find(x=>x.rowIndex===editingRowIndex);if(w){w.en=en;w.pl=pl;}});
     if(editingSource==='game'&&roundWords[current]?.rowIndex===editingRowIndex){
       document.getElementById('gameWordTitle').textContent=en;
-      document.getElementById('cardWord').textContent=isFlipped?pl:en;
+      const shown = isFlipped ? pl : en;
+      document.getElementById('cardWord').textContent=shown;
+      setCardFontSize(shown);
     }
     msg.textContent='✓ Zapisano';msg.style.color='#34c759';
     setTimeout(closeEditModal,700);
