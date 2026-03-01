@@ -861,7 +861,8 @@ function showSummary() {
 
 // ── IN-GAME CARD EDIT ─────────────────────────────────────────
 function openCardEdit() {
-  const card = session[current];
+  const card = roundWords[current];
+  if (!card) return;
   document.getElementById('cardEditEn').value = card.en;
   document.getElementById('cardEditPl').value = card.pl;
   document.getElementById('cardEditMsg').textContent = '';
@@ -877,14 +878,15 @@ async function saveCardEdit() {
   if (!en || !pl) return;
   const msg = document.getElementById('cardEditMsg');
   msg.textContent = 'Zapisywanie...'; msg.style.color = '#888';
-  const card = session[current];
+  const card = roundWords[current];
   try {
     await sheetsUpdate(card.rowIndex, en, pl);
-    // Update in-memory
+    // Update in all arrays
     card.en = en; card.pl = pl;
+    const sw = sessionWords.find(w => w.rowIndex === card.rowIndex);
+    if (sw) { sw.en = en; sw.pl = pl; }
     const wi = words.findIndex(w => w.rowIndex === card.rowIndex);
     if (wi !== -1) { words[wi].en = en; words[wi].pl = pl; }
-    session[current] = card;
     document.getElementById('frontWord').textContent = en;
     document.getElementById('backWord').textContent = pl;
     msg.textContent = '✓ Zapisano'; msg.style.color = '#2ecc71';
