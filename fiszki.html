@@ -531,6 +531,13 @@
   </div>
 </div>
 
+<!-- ROUND TRANSITION OVERLAY -->
+<div id="roundOverlay" style="display:none; position:fixed; inset:0; background:rgba(18,18,42,0.92); z-index:150; flex-direction:column; align-items:center; justify-content:center; gap:20px; animation: fadeUp 0.3s ease;">
+  <div style="font-size:3rem;">🔄</div>
+  <div style="font-family:'Playfair Display',serif; font-size:1.8rem; color:#c9a84c;">Powtórka!</div>
+  <div style="color:#888; font-size:1rem;">Jeszcze <span id="roundOverlayCount" style="color:#e8e8e8; font-weight:700;"></span> słówek do opanowania</div>
+</div>
+
 <!-- SUMMARY -->
 <div class="summary" id="summaryScreen" style="display:none;">
   <h2>Sesja zakończona!</h2>
@@ -559,8 +566,8 @@ const LS_KEY = 'fiszki_session_v3';
 const LS_KEY_PRIVATE = 'fiszki_private_key';
 
 // ── STATE ───────────────────────────────────────────────────
-let words = [];          // loaded from Google Sheets
-let session = [], current = 0, results = {good:0,bad:0}, animating = false, isFlipped = false;
+let words = [];
+let session = [], sessionWords = [], roundWords = [], current = 0, results = {good:0,bad:0}, animating = false, isFlipped = false;
 let accessToken = null, tokenExpiry = 0;
 let editingRow = null;   // { rowIndex, en, pl } — 0-based row in sheet (excl. header)
 
@@ -757,8 +764,11 @@ function startGame() {
 function startNewSession() {
   animating = false;
   isFlipped = false;
-  session = shuffle(words).slice(0, Math.min(SESSION_SIZE, words.length));
-  current = 0; results = {good:0,bad:0};
+  sessionWords = shuffle(words).slice(0, Math.min(SESSION_SIZE, words.length))
+    .map(w => ({ ...w, known: false }));
+  results = { good: 0, bad: 0 };
+  roundWords = shuffle([...sessionWords]);
+  current = 0;
   showStage(); renderCard(); updateStats();
 }
 
@@ -768,8 +778,16 @@ function showStage() {
 }
 
 function renderCard() {
-  if (current >= session.length) { showSummary(); return; }
-  const card = session[current];
+  if (current >= roundWords.length) {
+    const unknown = sessionWords.filter(w => !w.known);
+    if (unknown.length === 0) { showSummary(); return; }
+    // start next round with unknown words only
+    roundWords = shuffle(unknown.map(w => ({ ...w })));
+    current = 0;
+    showRoundTransition(unknown.length);
+    return;
+  }
+  const card = roundWords[current];
   const inner = document.getElementById('cardInner');
   inner.classList.remove('swipe-right', 'swipe-left', 'card-enter', 'flipped');
   inner.style.transform = '';
@@ -780,13 +798,24 @@ function renderCard() {
   setTimeout(() => inner.classList.remove('card-enter'), 350);
 }
 
+function showRoundTransition(unknownCount) {
+  document.getElementById('stage').style.display = 'none';
+  document.getElementById('statsBar').style.display = 'none';
+  document.getElementById('roundOverlayCount').textContent = unknownCount;
+  document.getElementById('roundOverlay').style.display = 'flex';
+  setTimeout(() => {
+    document.getElementById('roundOverlay').style.display = 'none';
+    showStage(); renderCard(); updateStats();
+  }, 2200);
+}
+
 function updateStats() {
-  const done = current;
-  const total = session.length;
-  document.getElementById('progressText').textContent = `Karta ${done}/${total}`;
+  const known = sessionWords.filter(w => w.known).length;
+  const total = sessionWords.length;
+  document.getElementById('progressText').textContent = `Znam ${known}/${total}`;
   document.getElementById('goodCount').textContent = results.good;
   document.getElementById('badCount').textContent = results.bad;
-  document.getElementById('progressFill').style.width = `${(done/total)*100}%`;
+  document.getElementById('progressFill').style.width = `${(known/total)*100}%`;
 }
 
 function flipCard() {
@@ -799,6 +828,12 @@ function answer(correct) {
   if (animating) return;
   animating = true;
   if (correct) results.good++; else results.bad++;
+
+  // Mark word in sessionWords
+  const card = roundWords[current];
+  const sw = sessionWords.find(w => w.en === card.en && w.pl === card.pl);
+  if (sw) sw.known = correct;
+
   current++;
   updateStats();
   const inner = document.getElementById('cardInner');
@@ -816,21 +851,12 @@ function showSummary() {
   document.getElementById('statsBar').style.display = 'none';
   const s = document.getElementById('summaryScreen');
   s.style.display = 'flex';
-  const total = session.length;
-  document.getElementById('sumCorrect').textContent = results.good;
+  const total = sessionWords.length;
+  document.getElementById('sumCorrect').textContent = total;
   document.getElementById('sumDenom').textContent = `/ ${total} kart`;
   document.getElementById('sumGood').textContent = results.good;
   document.getElementById('sumBad').textContent = results.bad;
-  const pct = Math.round((results.good/total)*100);
-  const msgs = [
-    [100,'🏆 Perfekcyjnie!'],
-    [80,'🎉 Świetna robota!'],
-    [60,'💪 Dobry wynik!'],
-    [40,'📚 Ćwicz więcej!'],
-    [0,'🌱 Nie poddawaj się!']
-  ];
-  const [,msg] = msgs.find(([t]) => pct >= t);
-  document.getElementById('sumMsg').textContent = `${pct}% poprawnych — ${msg}`;
+  document.getElementById('sumMsg').textContent = '🏆 Wszystkie słówka opanowane!';
 }
 
 // ── IN-GAME CARD EDIT ─────────────────────────────────────────
